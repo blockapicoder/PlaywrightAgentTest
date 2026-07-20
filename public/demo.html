@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Parcours Nova — Démonstration Playwright</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
+<body>
+  <main class="demo-shell">
+    <header class="demo-header">
+      <a class="demo-brand" href="/demo" aria-label="Nova accueil"><span>N</span><strong>Nova</strong></a>
+      <div class="live-chip"><i></i> Application de démonstration</div>
+      <button class="reset-button" id="resetDemo" type="button">Réinitialiser</button>
+    </header>
+
+    <section class="journey-card" aria-live="polite">
+      <div class="progress-head"><span id="stepLabel">Bienvenue</span><span id="stepCounter">Étape 1 sur 5</span></div>
+      <div class="progress-track"><i id="progressBar"></i></div>
+
+      <section class="screen active" data-screen="welcome">
+        <div class="hero-icon">✦</div>
+        <p class="eyebrow">PARCOURS INTERACTIF</p>
+        <h1>Configurez votre espace Nova</h1>
+        <p class="lead">Une application concrète en cinq écrans pour observer Playwright cliquer, saisir des informations et valider un parcours.</p>
+        <div class="feature-row"><span>✓ Profil</span><span>✓ Offre</span><span>✓ Confirmation</span></div>
+        <button class="primary-action" data-testid="start-journey" type="button">Commencer <span>→</span></button>
+      </section>
+
+      <section class="screen" data-screen="profile">
+        <p class="eyebrow">VOTRE PROFIL</p><h1>Faisons connaissance</h1><p class="lead">Ces informations seront reprises dans le récapitulatif.</p>
+        <form id="profileForm" class="demo-form">
+          <label>Prénom<input id="firstName" name="firstName" autocomplete="off" placeholder="Votre prénom" required></label>
+          <label>Adresse e-mail<input id="email" name="email" type="email" autocomplete="off" placeholder="nom@entreprise.fr" required></label>
+          <button class="primary-action" type="submit" data-testid="save-profile">Continuer <span>→</span></button>
+        </form>
+      </section>
+
+      <section class="screen" data-screen="plan">
+        <p class="eyebrow">VOTRE OFFRE</p><h1>Choisissez votre formule</h1><p class="lead">Sélectionnez l’environnement qui correspond à votre équipe.</p>
+        <form id="planForm">
+          <div class="plans">
+            <label class="plan-card"><input type="radio" name="plan" value="Solo"><span><b>Solo</b><small>Pour démarrer simplement</small></span><strong>Gratuit</strong></label>
+            <label class="plan-card"><input type="radio" name="plan" value="Équipe" data-testid="plan-team"><span><b>Équipe</b><small>Collaboration et automatisations</small></span><strong>24 €</strong></label>
+            <label class="plan-card"><input type="radio" name="plan" value="Entreprise"><span><b>Entreprise</b><small>Contrôle et sécurité avancés</small></span><strong>Sur devis</strong></label>
+          </div>
+          <button class="primary-action" type="submit" data-testid="save-plan">Continuer <span>→</span></button>
+        </form>
+      </section>
+
+      <section class="screen" data-screen="summary">
+        <p class="eyebrow">RÉCAPITULATIF</p><h1>Tout est prêt</h1><p class="lead">Vérifiez les informations avant de terminer la configuration.</p>
+        <dl class="summary"><div><dt>Prénom</dt><dd id="summaryName">—</dd></div><div><dt>E-mail</dt><dd id="summaryEmail">—</dd></div><div><dt>Formule</dt><dd id="summaryPlan">—</dd></div></dl>
+        <button class="primary-action" data-testid="confirm-journey" type="button">Confirmer la configuration <span>✓</span></button>
+      </section>
+
+      <section class="screen success-screen" data-screen="success">
+        <div class="success-icon">✓</div><p class="eyebrow">TERMINÉ</p><h1>Configuration terminée</h1>
+        <p class="lead">Le parcours a été exécuté avec succès. Les changements d’écran et les actions Playwright sont visibles dans Chrome.</p>
+        <div class="success-ticket"><span>État</span><strong>Compte Nova prêt</strong><small id="successIdentity"></small></div>
+      </section>
+    </section>
+
+    <aside class="activity-card"><div><i></i><strong>Activité visible</strong></div><p id="activityText">En attente du démarrage du parcours.</p></aside>
+  </main>
+  <script type="module" src="/demo.js"></script>
+</body>
+</html>

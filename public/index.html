@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Playwright Agent · Test Studio</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand"><span class="logo">PA</span><div><strong>Test Studio</strong><small>Playwright Agent</small></div></div>
+      <div class="connection" id="connection"><i></i><span>Connexion…</span></div>
+      <div class="aside-title"><span>SÉQUENCES</span><button id="refreshSequences" title="Actualiser">↻</button></div>
+      <div id="sequences" class="sequences"></div>
+      <div class="aside-foot"><span>Application principale</span><code id="mainUrl">http://127.0.0.1:3000</code></div>
+    </aside>
+
+    <main>
+      <header>
+        <div><p class="kicker">BANC DE TEST INTERACTIF</p><h1 id="title">Exécution Playwright</h1><p id="subtitle">Sélectionnez une séquence pour suivre chaque action dans Chrome.</p></div>
+        <div class="header-tools">
+          <div class="top-browser-indicator closed" id="topBrowserIndicator"><i></i><span id="topBrowserText">Chrome ouvert : NON</span></div>
+          <div class="header-actions">
+            <button class="secondary-action" id="launchDemo" disabled>◉ Ouvrir la démo</button>
+            <button class="secondary-action" id="runGeneration" disabled>✦ Générer</button>
+            <button class="primary" id="runExecution" disabled>▶ Exécuter les étapes</button>
+          </div>
+        </div>
+      </header>
+
+      <section id="empty" class="empty"><span>⌘</span><h2>Aucune séquence sélectionnée</h2><p>Choisissez une séquence dans la barre latérale.</p></section>
+
+      <section id="workspace" class="workspace hidden">
+        <div class="summary-grid">
+          <article><span>EXÉCUTION</span><strong id="executionStatus">Prête</strong><small id="executionStep">Aucune exécution en cours</small></article>
+          <article><span>GÉNÉRATION</span><strong id="generationStatus">Prête</strong><small id="generationStep">Aucune génération en cours</small></article>
+          <article><span>PROMPTS</span><strong id="promptCount">0</strong><small>Actions concrètes</small></article>
+          <article><span>ARTEFACTS</span><strong id="artifactCount">0</strong><small>Fichiers consultables</small></article>
+          <article id="chromeCard" class="chrome-card offline"><span>CHROME</span><strong id="browserStatus">Fermé</strong><small id="browserDetail">Aucun navigateur actif</small></article>
+        </div>
+
+        <nav>
+          <button class="active" data-tab="execution">Exécution en direct</button>
+          <button data-tab="generation-live">Génération en direct</button>
+          <button data-tab="artifacts">Scripts et fichiers</button>
+          <button data-tab="generations">Historique</button>
+          <button data-tab="prompts">Prompts source</button>
+        </nav>
+
+        <div id="execution" class="tab-panel">
+          <div class="execution-layout">
+            <section class="steps-panel">
+              <div class="panel-title"><div><h2>Étapes du scénario</h2><small>Les actions s’allument au fur et à mesure dans Chrome.</small></div><span class="live-badge"><i></i><b id="executionPercent">0 %</b></span></div>
+              <div class="live-meter"><i id="executionProgressBar"></i></div>
+              <ol id="executionSteps" class="execution-steps"></ol>
+            </section>
+            <section class="console-panel">
+              <div class="console-head"><div><i id="executionStateDot"></i><span id="executionText">En attente d’une exécution</span></div><button id="clearConsole">Effacer</button></div>
+              <div id="executionLog" class="execution-log"><p class="empty-log">Les événements de l’exécution apparaîtront ici.</p></div>
+            </section>
+          </div>
+        </div>
+
+        <div id="generation-live" class="tab-panel hidden">
+          <div class="execution-layout">
+            <section class="steps-panel">
+              <div class="panel-title"><div><h2>Étapes de la génération</h2><small>Chaque étape s’allume après son appel à POST /api/step.</small></div><span class="live-badge"><i></i><b id="generationLivePercent">0 %</b></span></div>
+              <div class="live-meter"><i id="generationLiveBar"></i></div>
+              <ol id="generationSteps" class="execution-steps"></ol>
+            </section>
+            <section class="console-panel">
+              <div class="console-head"><div><i id="generationStateDot"></i><span id="generationLiveText">En attente de la génération</span></div><code>API :3000</code></div>
+              <div id="generationApiEvents" class="execution-log"><p class="empty-log">Les résultats de /api/step apparaîtront ici.</p></div>
+            </section>
+          </div>
+        </div>
+
+        <div id="artifacts" class="tab-panel hidden"><div class="split"><div><div class="panel-title"><h2>Artefacts</h2><button id="refreshArtifacts">↻ Actualiser</button></div><div id="artifactList" class="artifact-list"></div></div><div class="viewer"><div class="viewer-head"><span id="viewerName">Sélectionnez un fichier</span><button id="copyFile" disabled>Copier</button></div><pre><code id="fileContent">Le contenu du script apparaîtra ici.</code></pre></div></div></div>
+        <div id="generations" class="tab-panel hidden"><div class="panel-title"><h2>Historique des générations</h2><button id="refreshGenerations">↻ Actualiser</button></div><div id="generationList" class="generation-list"></div></div>
+        <div id="prompts" class="tab-panel hidden"><div class="panel-title"><h2>Prompts de la séquence</h2></div><ol id="promptList" class="prompt-list"></ol></div>
+      </section>
+    </main>
+  </div>
+  <div id="toasts"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
