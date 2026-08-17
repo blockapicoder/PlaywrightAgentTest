@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Clients Nova — Démonstration multi-onglets</title>
+  <link rel="stylesheet" href="/clients.css">
+</head>
+<body>
+  <main class="clients-shell">
+    <header class="clients-header">
+      <a class="brand" href="/demo" aria-label="Retour à Nova"><span>N</span><strong>Nova</strong></a>
+      <nav><a href="/demo">Parcours</a><a class="active" href="/clients">Clients</a></nav>
+      <div class="test-chip"><i></i> Démonstration multi-onglets</div>
+    </header>
+
+    <section id="listView">
+      <div class="page-head">
+        <div><p class="eyebrow">BASE CLIENTS</p><h1>Tous les clients</h1><p>Une table complète conçue pour tester les recherches, filtres et ouvertures de fiches dans plusieurs onglets.</p></div>
+        <button id="openSampleTabs" class="primary" type="button" data-testid="open-three-client-tabs">Ouvrir 3 fiches <span>↗</span></button>
+      </div>
+
+      <section class="stats" aria-label="Indicateurs clients">
+        <article><span>Clients</span><strong id="clientCount">0</strong><small>Toutes formules</small></article>
+        <article><span>Clients actifs</span><strong id="activeCount">0</strong><small>Utilisation récente</small></article>
+        <article><span>Chiffre d’affaires</span><strong id="revenueTotal">0 €</strong><small>Valeur cumulée</small></article>
+        <article><span>Commandes</span><strong id="orderTotal">0</strong><small>Sur tous les comptes</small></article>
+      </section>
+
+      <section class="table-card">
+        <div class="table-tools">
+          <label>Rechercher un client<input id="clientSearch" type="search" placeholder="Nom, e-mail, entreprise, ville…" data-testid="client-search"></label>
+          <label>Filtrer par statut<select id="statusFilter" data-testid="client-status-filter"><option value="">Tous les statuts</option><option>Actif</option><option>À relancer</option><option>Suspendu</option></select></label>
+          <span id="visibleCount">0 résultat</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>ID</th><th>Civilité</th><th>Prénom</th><th>Nom</th><th>Date de naissance</th><th>E-mail</th><th>Téléphone</th><th>Entreprise</th><th>Poste</th><th>Adresse</th><th>Complément</th><th>Code postal</th><th>Ville</th><th>Pays</th><th>Formule</th><th>Statut</th><th>Création</th><th>Dernière activité</th><th>Commandes</th><th>Chiffre d’affaires</th><th>Marketing</th><th>Note</th><th>Action</th></tr></thead>
+            <tbody id="clientRows"></tbody>
+          </table>
+        </div>
+        <div id="emptyClients" class="empty hidden">Aucun client ne correspond aux critères.</div>
+      </section>
+      <aside id="tabActivity" class="activity" aria-live="polite"><span>ONGLETS</span><strong>Utilisez une fiche pour ouvrir un nouvel onglet.</strong></aside>
+    </section>
+
+    <section id="detailView" class="hidden">
+      <div class="detail-toolbar"><a href="/clients">← Retour à la table</a><a id="openNextClient" class="secondary" href="/clients" target="_blank" rel="noopener">Ouvrir le client suivant <span>↗</span></a></div>
+      <article class="detail-card">
+        <div class="detail-title"><div class="avatar" id="clientInitials"></div><div><p class="eyebrow">FICHE CLIENT · <span id="clientId"></span></p><h1 id="clientName"></h1><p id="clientCompany"></p></div><span id="clientStatus" class="status"></span></div>
+        <dl id="clientDetails"></dl>
+      </article>
+    </section>
+  </main>
+  <script type="module" src="/clients.js"></script>
+</body>
+</html>

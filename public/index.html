@@ -20,10 +20,12 @@
       <header>
         <div><p class="kicker">BANC DE TEST INTERACTIF</p><h1 id="title">Exécution Playwright</h1><p id="subtitle">Sélectionnez une séquence pour suivre chaque action dans Chrome.</p></div>
         <div class="header-tools">
-          <div class="top-browser-indicator closed" id="topBrowserIndicator"><i></i><span id="topBrowserText">Chrome ouvert : NON</span></div>
+          <div class="top-status-row"><div class="top-browser-indicator closed" id="topVscodeIndicator"><i></i><span id="topVscodeText">VS Code ouvert : NON</span></div><div class="top-browser-indicator closed" id="topBrowserIndicator"><i></i><span id="topBrowserText">Chrome ouvert : NON</span></div></div>
           <div class="header-actions">
+            <button class="secondary-action" id="testRouting" disabled>⇄ Tester le routage</button>
             <button class="secondary-action" id="launchDemo" disabled>◉ Ouvrir la démo</button>
             <button class="secondary-action" id="runGeneration" disabled>✦ Générer</button>
+            <button class="stop-action" id="stopGeneration" disabled>■ Stop génération</button>
             <button class="primary" id="runExecution" disabled>▶ Exécuter les étapes</button>
           </div>
         </div>
@@ -37,6 +39,7 @@
           <article><span>GÉNÉRATION</span><strong id="generationStatus">Prête</strong><small id="generationStep">Aucune génération en cours</small></article>
           <article><span>PROMPTS</span><strong id="promptCount">0</strong><small>Actions concrètes</small></article>
           <article><span>ARTEFACTS</span><strong id="artifactCount">0</strong><small>Fichiers consultables</small></article>
+          <article id="routingCard" class="routing-card idle"><span>ROUTAGE</span><strong id="routingStatus">Non testé</strong><small id="routingDetail">HTTPS → proxy HTTP → fetch</small></article>
           <article id="chromeCard" class="chrome-card offline"><span>CHROME</span><strong id="browserStatus">Fermé</strong><small id="browserDetail">Aucun navigateur actif</small></article>
         </div>
 
@@ -46,6 +49,7 @@
           <button data-tab="artifacts">Scripts et fichiers</button>
           <button data-tab="generations">Historique</button>
           <button data-tab="prompts">Prompts source</button>
+          <button data-tab="routing">Test du routage</button>
         </nav>
 
         <div id="execution" class="tab-panel">
@@ -79,6 +83,13 @@
         <div id="artifacts" class="tab-panel hidden"><div class="split"><div><div class="panel-title"><h2>Artefacts</h2><button id="refreshArtifacts">↻ Actualiser</button></div><div id="artifactList" class="artifact-list"></div></div><div class="viewer"><div class="viewer-head"><span id="viewerName">Sélectionnez un fichier</span><button id="copyFile" disabled>Copier</button></div><pre><code id="fileContent">Le contenu du script apparaîtra ici.</code></pre></div></div></div>
         <div id="generations" class="tab-panel hidden"><div class="panel-title"><h2>Historique des générations</h2><button id="refreshGenerations">↻ Actualiser</button></div><div id="generationList" class="generation-list"></div></div>
         <div id="prompts" class="tab-panel hidden"><div class="panel-title"><h2>Prompts de la séquence</h2></div><ol id="promptList" class="prompt-list"></ol></div>
+        <div id="routing" class="tab-panel hidden">
+          <section class="routing-panel">
+            <div class="panel-title"><div><h2>Contrôle du routage Playwright</h2><small>Le document et son appel fetch HTTPS sont interceptés puis servis par le proxy HTTP local.</small></div><button id="testRoutingPanel">⇄ Relancer le test</button></div>
+            <div class="routing-path"><span>HTTPS intercepté</span><b>→</b><span>Proxy HTTP</span><b>→</b><span>Fetch intercepté</span><b>→</b><span>Cible atteinte</span></div>
+            <pre id="routingLog">Aucun test exécuté.</pre>
+          </section>
+        </div>
       </section>
     </main>
   </div>

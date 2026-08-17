@@ -2,7 +2,7 @@ const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
 const api = async (url, options = {}) => {
-  const response = await fetch(url, { headers: { "Content-Type": "application/json" }, ...options });
+  const response = await fetch(url, { cache: "no-store", headers: { "Content-Type": "application/json" }, ...options });
   const type = response.headers.get("content-type") || "";
   const body = response.status === 204 ? null : type.includes("application/json") ? await response.json() : await response.text();
   if (!response.ok) throw new Error(body?.error || body || response.statusText);
@@ -12,7 +12,8 @@ const api = async (url, options = {}) => {
 const state = {
   current: "", sequences: [], artifacts: [], generations: [], prompts: [],
   selectedFile: "", fileContent: "", browserOpen: null,
-  generation: { state: "idle", events: [] }, execution: { state: "idle", logs: [] }, connected: false, configValid: false, browserReuseNote: ""
+  generation: { state: "idle", vscodeState: "closed", events: [] }, execution: { state: "idle", logs: [] }, connected: false, configValid: false, browserReuseNote: "",
+  routing: { state: "idle", result: null }
 };
 
 function toast(message, type = "success") {
@@ -32,10 +33,43 @@ function activateTab(name) {
 
 function updateButtons() {
   const ready = state.connected && state.configValid && Boolean(state.current);
-  const running = state.execution.state === "running" || state.generation.state === "running";
-  $("#launchDemo").disabled = !ready || running;
+  const generationRunning = state.generation.state === "running";
+  const running = state.execution.state === "running" || generationRunning;
+  const vscodeState = state.generation.vscodeState || "closed";
+  const routingRunning = state.routing.state === "running";
+  const routingReady = state.connected && state.configValid && !running && !routingRunning;
+  $("#testRouting").disabled = !routingReady;
+  $("#testRoutingPanel").disabled = !routingReady;
+  $("#launchDemo").disabled = !ready || running || Boolean(state.browserOpen);
   $("#runGeneration").disabled = !ready || running;
-  $("#runExecution").disabled = !ready || running || !state.browserOpen;
+  $("#stopGeneration").disabled = !ready || !generationRunning || !["opening", "open"].includes(vscodeState);
+  $("#runExecution").disabled = !ready || running;
+}
+
+function renderRouting() {
+  const labels = { idle: "Non testé", running: "Test en cours", success: "Validé", error: "Échec" };
+  const card = $("#routingCard");
+  card.className = `routing-card ${state.routing.state}`;
+  $("#routingStatus").textContent = labels[state.routing.state] || state.routing.state;
+  $("#routingDetail").textContent = state.routing.result?.message || "HTTPS → proxy HTTP → fetch";
+  const hits = state.routing.result?.hits || [];
+  $("#routingLog").textContent = hits.length
+    ? [state.routing.result.message, "", ...hits.map((hit) => `${new Date(hit.at).toLocaleTimeString()}  ${hit.endpoint.toUpperCase()}  ${hit.url}`)].join("\n")
+    : state.routing.state === "running" ? "Ouverture de Chrome et vérification du chemin réseau…" : "Aucun test exécuté.";
+}
+
+async function testRouting() {
+  state.routing = { state: "running", result: null };
+  renderRouting(); updateButtons(); activateTab("routing");
+  try {
+    const result = await api("/api/routing/test", { method: "POST", body: "{}" });
+    state.routing = { state: result.ok ? "success" : "error", result };
+    toast(result.message, result.ok ? "success" : "error");
+    await checkMain();
+  } catch (error) {
+    state.routing = { state: "error", result: { message: error.message, hits: [] } };
+    fail(error);
+  } finally { renderRouting(); updateButtons(); }
 }
 
 async function checkMain() {
@@ -57,7 +91,7 @@ async function checkMain() {
     $("#browserDetail").textContent = browserOpen ? state.browserReuseNote || "Session Playwright active · prête à être réutilisée" : "Aucun navigateur actif";
     $("#chromeCard").classList.toggle("online", browserOpen);
     $("#chromeCard").classList.toggle("offline", !browserOpen);
-    $("#launchDemo").textContent = browserOpen ? "↻ Nouveau Chrome" : "◉ Ouvrir la démo";
+    $("#launchDemo").textContent = "◉ Ouvrir la démo";
     updateButtons();
     return state.connected && state.configValid;
   } catch {
@@ -144,7 +178,7 @@ async function loadGenerations() {
     const card = document.createElement("article"); card.className = "generation-card";
     const dot = document.createElement("i"); dot.className = `state-dot ${generation.status}`;
     const info = document.createElement("div");
-    const title = document.createElement("strong"); title.textContent = generation.status === "finished" ? "Génération terminée" : generation.status === "running" ? "Génération en cours" : "Génération en erreur";
+    const title = document.createElement("strong"); title.textContent = generation.status === "finished" ? "Génération terminée" : generation.status === "running" ? "Génération en cours" : generation.status === "stopped" ? "Génération arrêtée" : "Génération en erreur";
     const detail = document.createElement("small"); detail.textContent = `Démarrée le ${new Date(generation.startedAt).toLocaleString()}${generation.currentStep !== undefined ? ` · étape ${generation.currentStep + 1}` : ""}`;
     info.append(title, detail); const id = document.createElement("code"); id.textContent = generation.id.slice(0, 8); card.append(dot, info, id); root.append(card);
   });
@@ -159,11 +193,19 @@ async function loadPrompts() {
 }
 
 async function loadStatus() {
-  const status = await api(`/api/sequences/${encodeURIComponent(state.current)}/status`);
+  const sequenceName = state.current;
+  const status = await api(`/api/sequences/${encodeURIComponent(sequenceName)}/status`);
+  if (state.current !== sequenceName) return;
   state.generation = status;
-  const labels = { idle: "Prête", running: "En cours", finished: "Terminée", error: "Erreur" };
+  const labels = { idle: "Prête", running: "En cours", finished: "Terminée", error: "Erreur", stopped: "Arrêtée" };
   $("#generationStatus").textContent = labels[status.state] || status.state;
   $("#generationStep").textContent = status.message || (status.state === "idle" ? "Aucune génération en cours" : "Suivi automatique actif");
+  const vscodeState = status.vscodeState || "closed";
+  const vscodeLabels = { closed: "VS Code ouvert : NON", opening: "VS Code : OUVERTURE…", open: "VS Code ouvert : OUI", stopping: "VS Code : ARRÊT…" };
+  $("#topVscodeText").textContent = vscodeLabels[vscodeState] || vscodeState;
+  $("#topVscodeIndicator").classList.toggle("open", vscodeState === "open");
+  $("#topVscodeIndicator").classList.toggle("pending", vscodeState === "opening" || vscodeState === "stopping");
+  $("#topVscodeIndicator").classList.toggle("closed", vscodeState === "closed");
   const completed = status.completedSteps ?? 0;
   const total = status.totalSteps ?? state.prompts.length;
   const percentage = total ? Math.round((completed / total) * 100) : 0;
@@ -176,10 +218,10 @@ async function loadStatus() {
   state.prompts.forEach((prompt, index) => {
     const done = index < completed;
     const active = status.state === "running" && index === completed;
-    const failed = status.state === "error" && index === completed;
+    const failed = ["error", "stopped"].includes(status.state) && index === completed;
     const stepState = done ? "done" : active ? "active" : failed ? "error" : "pending";
     const item = document.createElement("li"); item.className = `execution-step ${stepState}`;
-    item.innerHTML = `<span class="step-index">${done ? "✓" : failed ? "!" : index + 1}</span><div><strong>etape${index}.ts</strong><p></p></div><span class="step-state">${done ? "TERMINÉE" : active ? "EN COURS" : failed ? "ERREUR" : "EN ATTENTE"}</span>`;
+    item.innerHTML = `<span class="step-index">${done ? "✓" : failed ? "■" : index + 1}</span><div><strong>etape${index}.ts</strong><p></p></div><span class="step-state">${done ? "TERMINÉE" : active ? "EN COURS" : failed ? status.state === "stopped" ? "ARRÊTÉE" : "ERREUR" : "EN ATTENTE"}</span>`;
     item.querySelector("p").textContent = prompt;
     stepsRoot.append(item);
   });
@@ -248,10 +290,19 @@ $("#launchDemo").onclick = async () => {
   catch (error) { fail(error); } finally { updateButtons(); }
 };
 
+$("#testRouting").onclick = testRouting;
+$("#testRoutingPanel").onclick = testRouting;
+
 $("#runGeneration").onclick = async () => {
-  const button = $("#runGeneration"); button.disabled = true; button.textContent = "Génération…"; activateTab("generation-live");
+  const button = $("#runGeneration"); state.generation = { ...state.generation, state: "running", vscodeState: "opening", message: "Démarrage de l'agent de génération…" }; button.disabled = true; button.textContent = "Génération…"; updateButtons(); activateTab("generation-live");
   try { await api(`/api/sequences/${encodeURIComponent(state.current)}/test-generation`, { method: "POST", body: "{}" }); toast("Génération démarrée — suivi des appels API actif"); await refreshAll(); }
   catch (error) { fail(error); } finally { button.textContent = "✦ Générer"; updateButtons(); }
+};
+
+$("#stopGeneration").onclick = async () => {
+  const button = $("#stopGeneration"); button.disabled = true; button.textContent = "Arrêt…";
+  try { await api(`/api/sequences/${encodeURIComponent(state.current)}/test-generation/stop`, { method: "POST", body: "{}" }); toast("Génération arrêtée et fenêtre VS Code fermée", "warning"); await refreshAll(); }
+  catch (error) { fail(error); } finally { button.textContent = "■ Stop génération"; updateButtons(); }
 };
 
 $("#runExecution").onclick = async () => {
@@ -272,5 +323,7 @@ $("#clearConsole").onclick = () => { $("#executionLog").innerHTML = '<p class="e
 $("#copyFile").onclick = async () => { await navigator.clipboard.writeText(state.fileContent); toast("Contenu copié"); };
 $$('[data-tab]').forEach((button) => button.onclick = () => activateTab(button.dataset.tab));
 
+let liveRefreshBusy = false;
+renderRouting();
 loadSequences().catch(fail);
-setInterval(() => state.current ? refreshAll().catch(() => {}) : checkMain().catch(() => {}), 1200);
+setInterval(async () => { if (liveRefreshBusy) return; liveRefreshBusy = true; try { if (state.current) await refreshAll(); else await checkMain(); } catch {} finally { liveRefreshBusy = false; } }, 500);
